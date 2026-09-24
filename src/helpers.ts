@@ -12,6 +12,10 @@ const limiter = new Bottleneck({
 })
 
 limiter.on("failed", async (error, jobInfo) => {
+  if (!error.response) {
+    return
+  }
+
   if (error.response.status === 429 && jobInfo.retryCount < MAX_RATE_LIMIT_RETRIES) {
     // Retry according to the indication from the server with a small buffer
     return ((error.response.headers["retry-after"] || 1) * 1000) + REQUEST_RETRY_BUFFER
@@ -36,9 +40,16 @@ limiter.on("failed", async (error, jobInfo) => {
   }
 })
 
-export const apiCall = limiter.wrap(function(url: string, accessToken: string) {
-  return axios.get(url, { headers: { 'Authorization': 'Bearer ' + accessToken } })
+export const apiCall = limiter.wrap(function(url: string, accessToken: string, signal?: AbortSignal) {
+  return axios.get(url, {
+    headers: { 'Authorization': 'Bearer ' + accessToken },
+    signal
+  })
 })
+
+export function isAbortError(error: any): boolean {
+  return error?.name === "AbortError" || error?.name === "CanceledError" || error?.code === "ERR_CANCELED"
+}
 
 export function apiCallErrorHandler(error: any) {
   if (error.isAxiosError) {
