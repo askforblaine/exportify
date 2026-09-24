@@ -8,7 +8,6 @@ import JSZip from "jszip"
 import PlaylistExporter from "./PlaylistExporter"
 import {
   createExportSessionKey,
-  ExportCheckpoint,
   ExportCheckpointStore,
   playlistExportId
 } from "./ExportCheckpointStore"
@@ -184,7 +183,7 @@ class PlaylistsExporter extends React.Component<PlaylistsExporterProps, Playlist
         disabled={this.state.stopping}
         aria-label={this.state.exporting ? "Stop export" : undefined}
       >
-        <FontAwesomeIcon icon={this.state.exporting ? ['far', 'circle-stop'] : ['far', 'file-archive']} /> {text}
+        <FontAwesomeIcon icon={this.state.exporting ? ['far', 'times-circle'] : ['far', 'file-archive']} /> {text}
       </Button>
     )
   }
