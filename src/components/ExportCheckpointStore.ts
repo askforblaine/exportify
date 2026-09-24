@@ -1,6 +1,7 @@
 const DATABASE_NAME = "exportify"
 const DATABASE_VERSION = 1
 const STORE_NAME = "export-checkpoints"
+const EXPORT_FORMAT_VERSION = 2
 
 export interface CompletedPlaylistExport {
   playlistId: string
@@ -42,7 +43,8 @@ export function createExportSessionKey(playlists: any[], searchQuery: string, co
   return `export-${stableHash(JSON.stringify({
     playlists: playlistVersions,
     searchQuery,
-    config
+    config,
+    exportFormatVersion: EXPORT_FORMAT_VERSION
   }))}`
 }
 
