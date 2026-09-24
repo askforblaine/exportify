@@ -72,10 +72,15 @@ async function withStore<T>(
     return await new Promise<T>((resolve, reject) => {
       const transaction = database.transaction(STORE_NAME, mode)
       const request = operation(transaction.objectStore(STORE_NAME))
+      let result: T
 
-      request.onsuccess = () => resolve(request.result)
+      request.onsuccess = () => {
+        result = request.result
+      }
       request.onerror = () => reject(request.error)
+      transaction.oncomplete = () => resolve(result)
       transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
     })
   } finally {
     database.close()
