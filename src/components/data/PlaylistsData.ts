@@ -24,7 +24,7 @@ class PlaylistsData {
 
   async total() {
     if (!this.dataInitialized) {
-      await this.loadSlice(0, this.PLAYLIST_LIMIT, signal)
+      await this.loadSlice()
     }
 
     return this.data.filter(p => p).length
@@ -77,7 +77,7 @@ class PlaylistsData {
       this.onPlaylistsLoadingStarted()
     }
 
-    await this.loadSlice()
+    await this.loadSlice(0, this.PLAYLIST_LIMIT, signal)
 
     // Get the rest of them if necessary
     for (var offset = this.PLAYLIST_LIMIT; offset < this.data.length; offset = offset + this.PLAYLIST_LIMIT) {
