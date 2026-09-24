@@ -57,7 +57,7 @@ class TracksCsvFile {
 
     csvContent += this.columnNames.map(this.sanitize).join() + "\n"
 
-    this.lineTrackData.forEach((lineTrackData, trackId) => {
+    this.lineTrackData.forEach((lineTrackData) => {
       csvContent += lineTrackData.map(this.sanitize).join(",") + "\n"
     })
 
@@ -74,23 +74,36 @@ class PlaylistExporter {
   accessToken: string
   playlist: any
   config: any
+  signal?: AbortSignal
 
-  constructor(accessToken: string, playlist: any, config: any) {
+  constructor(accessToken: string, playlist: any, config: any, signal?: AbortSignal) {
     this.accessToken = accessToken
     this.playlist = playlist
     this.config = config
+    this.signal = signal
+  }
+
+  private throwIfAborted() {
+    if (this.signal?.aborted) {
+      throw new DOMException("Export interrupted", "AbortError")
+    }
   }
 
   async export() {
     return this.csvData().then((data) => {
+      this.throwIfAborted()
       var blob = new Blob([data], { type: "text/csv;charset=utf-8" })
       saveAs(blob, this.fileName(), { autoBom: false })
     })
   }
 
   async csvData() {
-    const tracksBaseData = new TracksBaseData(this.accessToken, this.playlist)
+    this.throwIfAborted()
+
+    const tracksBaseData = new TracksBaseData(this.accessToken, this.playlist, this.signal)
     const items = await tracksBaseData.trackItems()
+    this.throwIfAborted()
+
     const tracks = items.map(i => i.track)
     const tracksCsvFile = new TracksCsvFile(this.playlist, items)
 
@@ -98,17 +111,18 @@ class PlaylistExporter {
     await tracksCsvFile.addData(tracksBaseData, true)
 
     if (this.config.includeArtistsData) {
-      await tracksCsvFile.addData(new TracksArtistsData(this.accessToken, tracks))
+      await tracksCsvFile.addData(new TracksArtistsData(this.accessToken, tracks, this.signal))
     }
 
     if (this.config.includeAudioFeaturesData) {
-      await tracksCsvFile.addData(new TracksAudioFeaturesData(this.accessToken, tracks))
+      await tracksCsvFile.addData(new TracksAudioFeaturesData(this.accessToken, tracks, this.signal))
     }
 
     if (this.config.includeAlbumData) {
-      await tracksCsvFile.addData(new TracksAlbumData(this.accessToken, tracks))
+      await tracksCsvFile.addData(new TracksAlbumData(this.accessToken, tracks, this.signal))
     }
 
+    this.throwIfAborted()
     return tracksCsvFile.content()
   }
 

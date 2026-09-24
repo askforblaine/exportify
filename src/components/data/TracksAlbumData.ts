@@ -7,8 +7,8 @@ class TracksAlbumData extends TracksData {
 
   tracks: any[]
 
-  constructor(accessToken: string, tracks: any[]) {
-    super(accessToken)
+  constructor(accessToken: string, tracks: any[], signal?: AbortSignal) {
+    super(accessToken, signal)
     this.tracks = tracks
   }
 
@@ -21,6 +21,7 @@ class TracksAlbumData extends TracksData {
   }
 
   async data() {
+    this.throwIfAborted()
     const albumIds = Array.from(new Set(this.tracks.filter((track: any) => track.album.id).map((track: any) => track.album.id)))
 
     let requests = []
@@ -29,7 +30,7 @@ class TracksAlbumData extends TracksData {
       requests.push(`https://api.spotify.com/v1/albums?ids=${albumIds.slice(offset, offset + this.ALBUM_LIMIT)}`)
     }
 
-    const albumPromises = requests.map((request) => apiCall(request, this.accessToken))
+    const albumPromises = requests.map((request) => apiCall(request, this.accessToken, this.signal))
     const albumResponses = await Promise.all(albumPromises)
 
     const albumDataById = new Map<string, string[]>(

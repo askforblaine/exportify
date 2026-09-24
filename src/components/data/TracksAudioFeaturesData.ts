@@ -7,8 +7,8 @@ class TracksAudioFeaturesData extends TracksData {
 
   tracks: any[]
 
-  constructor(accessToken: string, tracks: any[]) {
-    super(accessToken)
+  constructor(accessToken: string, tracks: any[], signal?: AbortSignal) {
+    super(accessToken, signal)
     this.tracks = tracks
   }
 
@@ -30,6 +30,7 @@ class TracksAudioFeaturesData extends TracksData {
   }
 
   async data() {
+    this.throwIfAborted()
     const trackIds = this.tracks.map((track: any) => track.id)
 
     let requests = []
@@ -38,7 +39,7 @@ class TracksAudioFeaturesData extends TracksData {
       requests.push(`https://api.spotify.com/v1/audio-features?ids=${trackIds.slice(offset, offset + this.AUDIO_FEATURES_LIMIT)}`)
     }
 
-    const audioFeaturesPromises = requests.map(request => { return apiCall(request, this.accessToken) })
+    const audioFeaturesPromises = requests.map(request => { return apiCall(request, this.accessToken, this.signal) })
     const audioFeatures = (await Promise.all(audioFeaturesPromises)).flatMap((response) => response.data.audio_features)
 
     const audioFeaturesData = new Map<string, string[]>(audioFeatures.filter((af: any) => af).map((audioFeatures: any) => {
