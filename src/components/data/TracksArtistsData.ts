@@ -7,8 +7,8 @@ class TracksArtistsData extends TracksData {
 
   tracks: any[]
 
-  constructor(accessToken: string, tracks: any[]) {
-    super(accessToken)
+  constructor(accessToken: string, tracks: any[], signal?: AbortSignal) {
+    super(accessToken, signal)
     this.tracks = tracks
   }
 
@@ -19,6 +19,7 @@ class TracksArtistsData extends TracksData {
   }
 
   async data() {
+    this.throwIfAborted()
     const artistIds = Array.from(new Set(this.tracks.flatMap((track: any) => {
       return track
         .artists
@@ -33,7 +34,7 @@ class TracksArtistsData extends TracksData {
       requests.push(`https://api.spotify.com/v1/artists?ids=${artistIds.slice(offset, offset + this.ARTIST_LIMIT)}`)
     }
 
-    const artistPromises = requests.map(request => { return apiCall(request, this.accessToken) })
+    const artistPromises = requests.map(request => { return apiCall(request, this.accessToken, this.signal) })
     const artistResponses = await Promise.all(artistPromises)
 
     const artistsById = new Map(artistResponses.flatMap((response) => response.data.artists).map((artist: any) => [artist.id, artist]))

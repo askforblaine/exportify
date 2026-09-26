@@ -79,6 +79,7 @@
       "key": "Key",
       "loudness": "Loudness",
       "mode": "Mode",
+      "camelot_key": "Camelot Key",
       "speechiness": "Speechiness",
       "acousticness": "Acousticness",
       "instrumentalness": "Instrumentalness",

@@ -42,16 +42,16 @@ class PlaylistsData {
     }
   }
 
-  async all() {
-    await this.loadAll()
-    await this.loadLikedTracksPlaylist()
+  async all(signal?: AbortSignal) {
+    await this.loadAll(signal)
+    await this.loadLikedTracksPlaylist(signal)
 
     // Remove any uninitialized playlists when exporting
     return [this.likedTracksPlaylist, ...this.data.filter(p => p && Object.keys(p).length > 0)]
   }
 
-  async search(query: string) {
-    await this.loadAll()
+  async search(query: string, signal?: AbortSignal) {
+    await this.loadAll(signal)
 
     // Remove any uninitialized playlists when exporting
     let results = this.data.filter(p => p && Object.keys(p).length > 0)
@@ -72,16 +72,16 @@ class PlaylistsData {
     }
   }
 
-  async loadAll() {
+  async loadAll(signal?: AbortSignal) {
     if (this.onPlaylistsLoadingStarted) {
       this.onPlaylistsLoadingStarted()
     }
 
-    await this.loadSlice()
+    await this.loadSlice(0, this.PLAYLIST_LIMIT, signal)
 
     // Get the rest of them if necessary
     for (var offset = this.PLAYLIST_LIMIT; offset < this.data.length; offset = offset + this.PLAYLIST_LIMIT) {
-      await this.loadSlice(offset, offset + this.PLAYLIST_LIMIT)
+      await this.loadSlice(offset, offset + this.PLAYLIST_LIMIT, signal)
     }
 
     if (this.onPlaylistsLoadingDone) {
@@ -89,7 +89,7 @@ class PlaylistsData {
     }
   }
 
-  private async loadSlice(start = 0, end = start + this.PLAYLIST_LIMIT) {
+  private async loadSlice(start = 0, end = start + this.PLAYLIST_LIMIT, signal?: AbortSignal) {
     if (this.dataInitialized) {
       const loadedData = this.data.slice(start, end)
 
@@ -99,7 +99,7 @@ class PlaylistsData {
     }
 
     const playlistsUrl = `https://api.spotify.com/v1/users/${this.userId}/playlists?offset=${start}&limit=${end - start}`
-    const playlistsResponse = await apiCall(playlistsUrl, this.accessToken)
+    const playlistsResponse = await apiCall(playlistsUrl, this.accessToken, signal)
     const playlistsData = playlistsResponse.data
 
     if (!this.dataInitialized) {
@@ -110,13 +110,13 @@ class PlaylistsData {
     this.data.splice(start, playlistsData.items.length, ...playlistsData.items)
   }
 
-  private async loadLikedTracksPlaylist() {
+  private async loadLikedTracksPlaylist(signal?: AbortSignal) {
     if (this.likedTracksPlaylist !== null) {
       return
     }
 
     const likedTracksUrl = `https://api.spotify.com/v1/me/tracks`
-    const likedTracksResponse = await apiCall(likedTracksUrl, this.accessToken)
+    const likedTracksResponse = await apiCall(likedTracksUrl, this.accessToken, signal)
     const likedTracksData = likedTracksResponse.data
 
     this.likedTracksPlaylist = {

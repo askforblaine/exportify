@@ -229,8 +229,8 @@ describe("single playlist exporting", () => {
     expect(saveAsMock).toHaveBeenCalledWith(
       {
         content: [
-          `${baseTrackHeaders},"Danceability","Energy","Key","Loudness","Mode","Speechiness","Acousticness","Instrumentalness","Liveness","Valence","Tempo","Time Signature"\n` +
-          `${baseTrackDataCrying},"0.416","0.971","0","-5.55","1","0.0575","0.00104","0.0391","0.44","0.19","131.988","4"\n`
+          `${baseTrackHeaders},"Danceability","Energy","Key","Loudness","Mode","Camelot Key","Speechiness","Acousticness","Instrumentalness","Liveness","Valence","Tempo","Time Signature"\n` +
+          `${baseTrackDataCrying},"0.416","0.971","0","-5.55","1","8B","0.0575","0.00104","0.0391","0.44","0.19","131.988","4"\n`
         ],
         options: { type: 'text/csv;charset=utf-8' }
       },

@@ -1,14 +1,15 @@
 import i18n from "../../i18n/config"
 import TracksData from "./TracksData"
 import { apiCall } from "helpers"
+import { camelotKey } from "./CamelotKey"
 
 class TracksAudioFeaturesData extends TracksData {
   AUDIO_FEATURES_LIMIT = 100
 
   tracks: any[]
 
-  constructor(accessToken: string, tracks: any[]) {
-    super(accessToken)
+  constructor(accessToken: string, tracks: any[], signal?: AbortSignal) {
+    super(accessToken, signal)
     this.tracks = tracks
   }
 
@@ -19,6 +20,7 @@ class TracksAudioFeaturesData extends TracksData {
       i18n.t("track.audio_features.key"),
       i18n.t("track.audio_features.loudness"),
       i18n.t("track.audio_features.mode"),
+      i18n.t("track.audio_features.camelot_key"),
       i18n.t("track.audio_features.speechiness"),
       i18n.t("track.audio_features.acousticness"),
       i18n.t("track.audio_features.instrumentalness"),
@@ -30,6 +32,7 @@ class TracksAudioFeaturesData extends TracksData {
   }
 
   async data() {
+    this.throwIfAborted()
     const trackIds = this.tracks.map((track: any) => track.id)
 
     let requests = []
@@ -38,7 +41,7 @@ class TracksAudioFeaturesData extends TracksData {
       requests.push(`https://api.spotify.com/v1/audio-features?ids=${trackIds.slice(offset, offset + this.AUDIO_FEATURES_LIMIT)}`)
     }
 
-    const audioFeaturesPromises = requests.map(request => { return apiCall(request, this.accessToken) })
+    const audioFeaturesPromises = requests.map(request => { return apiCall(request, this.accessToken, this.signal) })
     const audioFeatures = (await Promise.all(audioFeaturesPromises)).flatMap((response) => response.data.audio_features)
 
     const audioFeaturesData = new Map<string, string[]>(audioFeatures.filter((af: any) => af).map((audioFeatures: any) => {
@@ -50,6 +53,7 @@ class TracksAudioFeaturesData extends TracksData {
           audioFeatures.key,
           audioFeatures.loudness,
           audioFeatures.mode,
+          camelotKey(audioFeatures.key, audioFeatures.mode),
           audioFeatures.speechiness,
           audioFeatures.acousticness,
           audioFeatures.instrumentalness,
@@ -64,7 +68,7 @@ class TracksAudioFeaturesData extends TracksData {
     // Add empty fields where we didn't get data - can be the case for example with episodes
     const audioFeaturesTrackUris = Array.from(audioFeaturesData.keys())
     this.tracks.filter(t => !audioFeaturesTrackUris.includes(t.uri)).forEach((track) => {
-      audioFeaturesData.set(track.uri, ["", "", "", "", "", "", "", "", "", "", "", ""])
+      audioFeaturesData.set(track.uri, ["", "", "", "", "", "", "", "", "", "", "", "", ""])
     })
 
     return audioFeaturesData
